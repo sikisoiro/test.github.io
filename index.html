@@ -1,84 +1,98 @@
-<div class="controls">
-    <label for="inputText">テキストを入力:</label>
-    <input type="text" id="inputText" placeholder="ここにテキストを入力" />
-    
-    <br><br>
-    <button id="applyText">テキストを適用</button>
-    
-    <br><br>
-    <button id="toggleAdmin">管理モード</button>
-    
-    <div id="adminControls" class="hidden">
-        <label for="fontSize">フォントサイズ:</label>
-        <input type="number" id="fontSize" value="30" min="10" max="100" />
-        
-        <br><br>
-        <label for="fontFamily">フォント:</label>
-        <select id="fontFamily">
-            <option value="Arial">Arial</option>
-            <option value="Courier">Courier</option>
-            <option value="Verdana">Verdana</option>
-        </select>
-    </div>
+<!-- 社員追加フォーム -->
+<h2>社員情報追加</h2>
+<form id="addEmployeeForm">
+    <label for="name">名前:</label>
+    <input type="text" id="name" required><br>
+    <label for="position">役職:</label>
+    <input type="text" id="position" required><br>
+    <label for="department">部署:</label>
+    <input type="text" id="department" required><br>
+    <label for="joinDate">入社日:</label>
+    <input type="date" id="joinDate" required><br>
+    <button type="submit">追加</button>
+</form>
 
-    <br><br>
-    <button id="downloadButton">画像をダウンロード</button>
-</div>
+<h2>社員情報一覧</h2>
+<div id="employeeList"></div>
+
+<!-- 検索フォーム -->
+<input type="text" id="search" placeholder="名前で検索" onkeyup="searchEmployee()">
 
 <script>
-    const canvas = document.getElementById("canvas");
-    const ctx = canvas.getContext("2d");
-    const inputText = document.getElementById("inputText");
-    const applyTextButton = document.getElementById("applyText");
-    const downloadButton = document.getElementById("downloadButton");
-    const adminControls = document.getElementById("adminControls");
-    const toggleAdminButton = document.getElementById("toggleAdmin");
-    const fontSizeInput = document.getElementById("fontSize");
-    const fontFamilySelect = document.getElementById("fontFamily");
-
-    let fontSize = 30;
-    let fontFamily = "Arial";
-
-    // 初期画像のロード
-    const image = new Image();
-    image.src = "your-image-path.jpg"; // 使用する画像のパス
-    image.onload = () => {
-        ctx.drawImage(image, 0, 0, canvas.width, canvas.height);
+    // Firebaseの設定
+    const firebaseConfig = {
+        apiKey: "your-api-key",
+        authDomain: "your-project-id.firebaseapp.com",
+        projectId: "your-project-id",
+        storageBucket: "your-project-id.appspot.com",
+        messagingSenderId: "your-messaging-sender-id",
+        appId: "your-app-id"
     };
 
-    // テキストをキャンバスに追加
-    function applyText() {
-        ctx.clearRect(0, 0, canvas.width, canvas.height); // 画像を消去
-        ctx.drawImage(image, 0, 0, canvas.width, canvas.height); // 再描画
-        ctx.font = `${fontSize}px ${fontFamily}`;
-        ctx.fillText(inputText.value, 50, 100); // テキストの位置
+    // Firebase初期化
+    const app = firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore(app);
+
+    // 社員情報の追加
+    document.getElementById("addEmployeeForm").addEventListener("submit", function(event) {
+        event.preventDefault();
+
+        const name = document.getElementById("name").value;
+        const position = document.getElementById("position").value;
+        const department = document.getElementById("department").value;
+        const joinDate = document.getElementById("joinDate").value;
+
+        // Firestoreにデータを追加
+        db.collection("employees").add({
+            name: name,
+            position: position,
+            department: department,
+            joinDate: joinDate
+        }).then(() => {
+            alert("社員情報を追加しました！");
+            loadEmployeeList();
+        }).catch(error => {
+            console.error("Error adding document: ", error);
+        });
+    });
+
+    // 社員情報の表示
+    function loadEmployeeList() {
+        const employeeListDiv = document.getElementById("employeeList");
+        employeeListDiv.innerHTML = '';  // 以前の内容をクリア
+
+        db.collection("employees").get().then(querySnapshot => {
+            querySnapshot.forEach(doc => {
+                const employee = doc.data();
+                const employeeElement = document.createElement("div");
+                employeeElement.innerHTML = `
+                    <p><strong>名前:</strong> ${employee.name}</p>
+                    <p><strong>役職:</strong> ${employee.position}</p>
+                    <p><strong>部署:</strong> ${employee.department}</p>
+                    <p><strong>入社日:</strong> ${employee.joinDate}</p>
+                    <hr>
+                `;
+                employeeListDiv.appendChild(employeeElement);
+            });
+        });
     }
 
-    // 管理モードのトグル
-    toggleAdminButton.addEventListener("click", () => {
-        adminControls.classList.toggle("hidden");
-    });
+    // 検索機能
+    function searchEmployee() {
+        const query = document.getElementById("search").value.toLowerCase();
+        const employeeListDiv = document.getElementById("employeeList");
+        const employeeElements = employeeListDiv.getElementsByTagName("div");
 
-    // テキストを適用
-    applyTextButton.addEventListener("click", applyText);
+        for (let i = 0; i < employeeElements.length; i++) {
+            const employeeName = employeeElements[i].getElementsByTagName("strong")[0].nextSibling.textContent.toLowerCase();
+            if (employeeName.includes(query)) {
+                employeeElements[i].style.display = "";
+            } else {
+                employeeElements[i].style.display = "none";
+            }
+        }
+    }
 
-    // フォントサイズの変更
-    fontSizeInput.addEventListener("input", (e) => {
-        fontSize = e.target.value;
-        applyText();
-    });
-
-    // フォント変更
-    fontFamilySelect.addEventListener("change", (e) => {
-        fontFamily = e.target.value;
-        applyText();
-    });
-
-    // 画像のダウンロード
-    downloadButton.addEventListener("click", () => {
-        const link = document.createElement("a");
-        link.download = "image_with_text.png";
-        link.href = canvas.toDataURL("image/png");
-        link.click();
-    });
+    // ページロード時に社員情報を表示
+    loadEmployeeList();
 </script>
