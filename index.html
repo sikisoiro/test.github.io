@@ -16,12 +16,6 @@
     <label for="date">配属年月日:</label>
     <input type="date" id="date" required>
 
-    <!-- 画像アップロード -->
-    <div class="upload-container">
-        <label for="imageUpload">IDカードテンプレート画像をアップロード:</label>
-        <input type="file" id="imageUpload" accept="image/*" onchange="previewImage(event)">
-    </div>
-
     <button onclick="generateIDCard()">発行</button>
 </div>
 
@@ -29,24 +23,16 @@
 <canvas id="idCardCanvas" width="600" height="350"></canvas>
 
 <script>
-    let uploadedImage = null;  // アップロードされた画像
+    // 事前に用意されたテンプレート画像を読み込む
+    const templateImage = new Image();
+    templateImage.src = 'idcard-template.png'; // 画像ファイルのパスを指定
 
-    // 画像アップロードのプレビュー
-    function previewImage(event) {
-        const reader = new FileReader();
-        reader.onload = function() {
-            uploadedImage = new Image();
-            uploadedImage.onload = function() {
-                const canvas = document.getElementById('idCardCanvas');
-                const ctx = canvas.getContext('2d');
-                // キャンバスに画像を描画
-                ctx.clearRect(0, 0, canvas.width, canvas.height);
-                ctx.drawImage(uploadedImage, 0, 0, canvas.width, canvas.height);
-            };
-            uploadedImage.src = reader.result;
-        };
-        reader.readAsDataURL(event.target.files[0]);
-    }
+    templateImage.onload = function() {
+        // 画像が読み込まれたら初期化
+        const canvas = document.getElementById('idCardCanvas');
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(templateImage, 0, 0, canvas.width, canvas.height);
+    };
 
     // IDカード生成
     function generateIDCard() {
@@ -59,24 +45,32 @@
         const canvas = document.getElementById('idCardCanvas');
         const ctx = canvas.getContext('2d');
 
-        if (!uploadedImage) {
-            alert("テンプレート画像をアップロードしてください。");
+        if (!templateImage.complete) {
+            alert("テンプレート画像が読み込まれていません。");
             return;
         }
 
-        // キャンバスにテンプレート画像を描画
+        // テンプレート画像をキャンバスに描画
         ctx.clearRect(0, 0, canvas.width, canvas.height);
-        ctx.drawImage(uploadedImage, 0, 0, canvas.width, canvas.height);
+        ctx.drawImage(templateImage, 0, 0, canvas.width, canvas.height);
 
         // テキスト設定
         ctx.font = '20px Arial';
         ctx.fillStyle = '#333';
 
-        // テキストを指定した位置に配置
+        // ユーザーネームの位置
         ctx.fillText('ユーザーネーム: ' + username, 20, 50);
+
+        // 階級の位置
         ctx.fillText('階級: ' + rank, 20, 90);
+
+        // 所属の位置
         ctx.fillText('所属: ' + department, 20, 130);
+
+        // 所属先の位置
         ctx.fillText('所属先: ' + company, 20, 170);
+
+        // 配属年月日の位置
         ctx.fillText('配属年月日: ' + date, 20, 210);
 
         // ダウンロードリンク生成
