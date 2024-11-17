@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IDカード自動発行システム</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            background-color: #f0f0f0;
+            padding: 20px;
+        }
+        .form-container {
+            margin: 20px;
+            padding: 20px;
+            background-color: #fff;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            max-width: 400px;
+            margin: auto;
+        }
+        input {
+            padding: 10px;
+            margin: 10px 0;
+            width: 100%;
+            font-size: 16px;
+        }
+        button {
+            padding: 10px 20px;
+            font-size: 16px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        canvas {
+            display: block;
+            margin: 20px auto;
+            background-color: #fff;
+            border: 1px solid #ddd;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>IDカード自動発行システム</h1>
+
+    <div class="form-container">
+        <label for="username">ユーザーネーム:</label>
+        <input type="text" id="username" placeholder="例: 山田太郎" required>
+
+        <label for="rank">階級:</label>
+        <input type="text" id="rank" placeholder="例: 係長" required>
+
+        <label for="department">所属:</label>
+        <input type="text" id="department" placeholder="例: 営業部" required>
+
+        <label for="company">所属先:</label>
+        <input type="text" id="company" placeholder="例: ABC株式会社" required>
+
+        <label for="date">配属年月日:</label>
+        <input type="date" id="date" required>
+
+        <button onclick="generateIDCard()">発行</button>
+    </div>
+
+    <canvas id="idCardCanvas" width="600" height="350"></canvas>
+
+    <script>
+        function generateIDCard() {
+            const username = document.getElementById('username').value;
+            const rank = document.getElementById('rank').value;
+            const department = document.getElementById('department').value;
+            const company = document.getElementById('company').value;
+            const date = document.getElementById('date').value;
+
+            const canvas = document.getElementById('idCardCanvas');
+            const ctx = canvas.getContext('2d');
+
+            // IDカードのテンプレート
+            ctx.clearRect(0, 0, canvas.width, canvas.height); // 以前の内容を消去
+
+            // 背景
+            ctx.fillStyle = '#f4f4f9';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // IDカードの枠
+            ctx.strokeStyle = '#333';
+            ctx.lineWidth = 4;
+            ctx.strokeRect(10, 10, 580, 330);
+
+            // テキスト設定
+            ctx.font = '20px Arial';
+            ctx.fillStyle = '#333';
+
+            // ユーザーネーム
+            ctx.fillText('ユーザーネーム: ' + username, 20, 50);
+
+            // 階級
+            ctx.fillText('階級: ' + rank, 20, 90);
+
+            // 所属
+            ctx.fillText('所属: ' + department, 20, 130);
+
+            // 所属先
+            ctx.fillText('所属先: ' + company, 20, 170);
+
+            // 配属年月日
+            ctx.fillText('配属年月日: ' + date, 20, 210);
+
+            // ダウンロードリンク生成
+            const dataUrl = canvas.toDataURL('image/png');
+            const a = document.createElement('a');
+            a.href = dataUrl;
+            a.download = username + '_IDCard.png';
+            a.textContent = 'IDカードをダウンロード';
+            document.body.appendChild(a);
+        }
+    </script>
+
+</body>
+</html>
